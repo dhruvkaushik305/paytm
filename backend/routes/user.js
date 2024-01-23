@@ -31,7 +31,7 @@ router.post("/signup", (req, res) => {
       if (user) {
         res.status(411).json({ message: "Email already taken" });
       } else {
-        bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+        bcrypt.hash(req.body.password, saltRounds).then((hash) => {
           User.create({
             username: req.body.username,
             firstName: req.body.firstName,
@@ -57,7 +57,7 @@ router.post("/signin", (req, res) => {
       username: req.body.username,
     }).then((user) => {
       if (user) {
-        bcrypt.compare(req.body.password, user.password, (err, result) => {
+        bcrypt.compare(req.body.password, user.password).then((result) => {
           if (result) {
             res.status(200).json({
               token: jwt.sign({ userId: user._id }, process.env.JWT_SECRET),
@@ -72,16 +72,36 @@ router.post("/signin", (req, res) => {
     });
   }
 });
-router.put("/", middleware, (req, res) => {
+router.put("/", middleware, async (req, res) => {
   const { success } = updationSchema.safeParse(req.body);
   if (success) {
     if (req.body.password) {
       //this means that the password needs to be updated.
-      bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+      bcrypt.hash(req.body.password, saltRounds).then((hash) => {
         req.body.password = hash;
       });
     }
-    User.updateOne(req.userId, req.body);
+    await User.updateOne(req.userId, req.body);
   }
+});
+router.get("/bulk", (req, res) => {
+  const { filter } = req.params || "";
+  User.find({
+    $or: [
+      { firstName: { $regex: filter } },
+      {
+        lastName: { $regex: filter },
+      },
+    ],
+  }).then((result) => {
+    res.json({
+      users: result.map((user) => ({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+        _id: user._id,
+      })),
+    });
+  });
 });
 module.exports = router;
