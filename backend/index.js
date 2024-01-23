@@ -7,5 +7,5 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use("/api/v1", apiRouter);
 app.listen(3000, () => {
-  console.log("Backend's up and running");
+  console.log("Backend's up and running @3000");
 });
