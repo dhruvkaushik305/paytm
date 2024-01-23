@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const saltRounds = 10;
 require("dotenv").config();
 const { User } = require("../db");
+const middleware = require("../middlewares/middleware");
 const signupSchema = z.object({
   username: z.string().email(),
   firstName: z.string(),
@@ -15,6 +16,11 @@ const signupSchema = z.object({
 const signinSchema = z.object({
   username: z.string().email(),
   password: z.string().min(6),
+});
+const updationSchema = z.object({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  password: z.string().min(6).optional(),
 });
 router.post("/signup", (req, res) => {
   const { success } = signupSchema.safeParse(req.body);
@@ -64,6 +70,18 @@ router.post("/signin", (req, res) => {
         res.status(411).json({ message: "User doesn't exist" });
       }
     });
+  }
+});
+router.put("/", middleware, (req, res) => {
+  const { success } = updationSchema.safeParse(req.body);
+  if (success) {
+    if (req.body.password) {
+      //this means that the password needs to be updated.
+      bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+        req.body.password = hash;
+      });
+    }
+    User.updateOne(req.userId, req.body);
   }
 });
 module.exports = router;

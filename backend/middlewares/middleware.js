@@ -4,8 +4,13 @@ module.exports = (req, res, next) => {
   const token = req.headers.authorization.split(" ")[1];
   try {
     const { userId } = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = userId;
-    next();
+    if (userId) {
+      req.userId = userId;
+      next();
+    } else {
+      console.log(userId);
+      return res.status(403).json({ message: "Credentials not found" });
+    }
   } catch (err) {
     console.log(err);
     return res.status(403).json({ message: "Token not found" });
