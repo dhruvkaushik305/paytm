@@ -1,8 +1,13 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
-mongoose.connect(process.env.DATABASE_URL).then(() => {
-  console.log("DB's up");
-});
+mongoose
+  .connect(process.env.DATABASE_URL)
+  .then(() => {
+    console.log("DB's up");
+  })
+  .catch((err) => {
+    console.log(err);
+  });
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
